@@ -1,4 +1,4 @@
-// Bai code duoc thuc hien boi sinh vien VI VAN DAT khoa dien -SEEE-HUST
+// Bai code duoc thuc hien boi sinh vien VI VAN DAT khoa dien - SEEE - HUST
 #include <LiquidCrystal.h>
 LiquidCrystal lcd(1, 0, 5, 4, 3, 2);
 int analogPin=0;
