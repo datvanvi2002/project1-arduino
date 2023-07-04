@@ -1,0 +1,435 @@
+// Bai code duoc thuc hien boi sinh vien VI VAN DAT khoa dien -SEEE-HUST
+
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x27, 16, 2);  //hoac 0x3F
+//do R
+int analogPin = 0;
+float Vin = 5;
+float V, R, imgV;
+float R1 = 200;
+float R2 = 1000;
+float R3 = 10000;
+float R4 = 100000;
+int q1 = 10;
+int q2 = 11;
+int q3 = 12;
+int q4 = 13;
+
+//do C
+int analogPinC = 1;
+int xa = 6;
+int sac1 = 7;
+int sac2 = 8;
+int sac3 = 9;
+double RC1= 1000; //1kohm
+double RC2 = 100000;//100k
+double RC3 = 1000000;;//1M
+unsigned long t,dt;
+double uF, nF, mF,pF;
+
+//do L
+double pulse,pulse1, tanso, cap, diencam, diencam_mH,diencam_uH;
+int  in = 4;
+int out = 5 ;
+
+//nut bam
+int buttonSelected = 0;
+int button1 = 1;
+int button2 = 2;
+int button3 = 3;
+void setup() {
+    lcd.init();                    
+    lcd.backlight();
+    if(buttonSelected == 0){
+        lcd.clear();													
+        lcd.setCursor(0, 0);
+        lcd.print("Nhan nut  1.Do L"); 
+        lcd.setCursor(0, 1);
+        lcd.print("2.Do C    3.Do R");
+        delay(200);
+    }
+     //setup nut bam
+    pinMode(button1, INPUT_PULLUP);//D3
+    pinMode(button2, INPUT_PULLUP);//D2
+    pinMode(button3, INPUT_PULLUP);//D1
+}
+
+void loop() {
+    //nutbam
+   
+
+    if (digitalRead(button1) == LOW) {
+      buttonSelected = 1;
+      }
+    if (digitalRead(button2) == LOW) {
+      buttonSelected = 2;
+      }
+    if (digitalRead(button3) == LOW) {
+      buttonSelected = 3;
+      }
+    if (buttonSelected == 1) {//doR
+
+        pinMode(q1, OUTPUT);//D10
+        pinMode(q2, OUTPUT);//D11
+        pinMode(q3, OUTPUT);//D12
+        pinMode(q4, OUTPUT);//D13
+
+        lcd.clear();													
+        lcd.setCursor(0, 0);
+        lcd.print("  Do Dien Tro");
+        delay(1500);
+        while(buttonSelected==1){
+           if (digitalRead(button1) == LOW) {
+                buttonSelected = 1;
+            }
+          if (digitalRead(button2) == LOW) {
+                buttonSelected = 2;
+            }
+          if (digitalRead(button3) == LOW) {
+                buttonSelected = 3;
+            }
+          doR();
+        }
+    }
+    if (buttonSelected == 2) {
+
+        pinMode(sac2,INPUT);//D8
+        pinMode(sac3,INPUT);//D9
+
+        lcd.clear();													
+        lcd.setCursor(0, 0);
+        lcd.print("   Do Tu Dien");
+        delay(1500);
+        while(buttonSelected==2){ 
+            if (digitalRead(button1) == LOW) {
+                buttonSelected = 1;
+                }
+            if (digitalRead(button2) == LOW) {
+                buttonSelected = 2;
+            }
+            if (digitalRead(button3) == LOW) {
+                buttonSelected = 3;
+            }
+            doC();
+        }
+    }
+    if (buttonSelected == 3) {
+
+        pinMode(in, INPUT); //D5 doc tin hieu cua bo so sanh
+	    pinMode(out, OUTPUT);//D4
+
+        lcd.clear();													
+        lcd.setCursor(0, 0);
+        lcd.print("Dua cuon cam vao");
+        delay(1500);
+        while(buttonSelected==3){
+            if (digitalRead(button1) == LOW) {
+                buttonSelected = 1;
+            }
+            if (digitalRead(button2) == LOW) {
+                buttonSelected = 2;
+            }
+            if (digitalRead(button3) == LOW) {
+                buttonSelected = 3;
+            }
+            doL();
+        }
+    }
+}
+void doR(){
+  
+    //Bat Q1, con lai tat
+    digitalWrite(q1, LOW);
+    digitalWrite(q2, HIGH);
+    digitalWrite(q3, HIGH);
+    digitalWrite(q4, HIGH);
+
+    imgV = analogRead(analogPin);
+    //bat dau qua trinh 1 : neu analog thu duoc nho 240 in ra man hinh như duoi
+
+    if (imgV < 240) {
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("    Low Load   ");
+        lcd.setCursor(0, 1);
+        lcd.print("3 To Continue ");
+        delay(500);
+        // chuc nang
+        if (digitalRead(button1) == LOW) {
+            buttonSelected=4;
+           
+            //hien thi
+            while(buttonSelected==4){
+                imgV = analogRead(analogPin);
+                if(imgV>240){
+                    buttonSelected=1;
+                    break;
+                }
+                V = (imgV * Vin) / 1023;
+                R = R1 * imgV / (1023 - imgV);
+                lcd.clear();
+                lcd.setCursor(0, 0);
+                lcd.print("Gia tri dien tro");
+                lcd.setCursor(0, 1);
+                lcd.print("R.= ");
+                lcd.print(R);
+                lcd.setCursor(13, 1);
+                lcd.print("Ohm");
+                delay(500);
+                if (digitalRead(button1) == LOW) {
+                    buttonSelected = 4;
+                }
+                if (digitalRead(button2) == LOW) {
+                    buttonSelected = 2;
+                }
+                if (digitalRead(button3) == LOW) {
+                    buttonSelected = 3;
+                }
+            }
+        }
+        } else {
+        //neu khong thuoc khoang do thi thuc hien
+            if ((imgV >= 240) && (imgV <= 670)) {
+            V = (imgV * Vin) / 1023;
+            R = R1 * imgV / (1023 - imgV);
+            //hien thi
+            lcd.clear();
+            lcd.setCursor(0, 0);
+            lcd.print("Gia tri dien tro");
+            lcd.setCursor(0, 1);
+            lcd.print("R= ");
+            lcd.print(R);
+            lcd.setCursor(13, 1);
+            lcd.print("Ohm");
+            delay(500);
+            } else {
+                //Bat Q2, tat Q1,Q3,Q4,Q5
+                digitalWrite(q1, HIGH);
+                digitalWrite(q2, LOW);
+                digitalWrite(q3, HIGH);
+                digitalWrite(q4, HIGH);
+
+                //do lai gia tri analog tuong ung voi R m?u m?i là R2
+                imgV = analogRead(analogPin);
+                //analog khong the dua ra ket qua nho hon 240 vi imgV=<240 da duoc do o qua trinh 1
+                // khi analog trong khoang  240-780 thi next
+                if ((imgV >= 240) && (imgV <= 780)) {
+                    V = (imgV * Vin) / 1023;
+                    R = R2 * imgV / (1023 - imgV);
+
+                    lcd.clear();
+                    lcd.setCursor(0, 0);
+                    lcd.print("Gia tri dien tro");
+                    lcd.setCursor(0, 1);
+                    lcd.print("R= ");
+                    lcd.print(R);
+                    lcd.setCursor(13, 1);
+                    lcd.print("Ohm");
+                    delay(500);
+                } else {
+                    // đây chính là khoang analog lon hơn 780
+                    //Bat Q3, tat Q1,Q2,Q4,Q5
+                    digitalWrite(q1, HIGH);
+                    digitalWrite(q2, HIGH);
+                    digitalWrite(q3, LOW);
+                    digitalWrite(q4, HIGH);
+
+
+                    //do lai gia tri analog tuong ung voi R ref moi là R3
+                    imgV = analogRead(analogPin);
+                    if ((imgV >= 240) && (imgV <= 780)) {
+                        V = (imgV * Vin) / 1023;
+                        R = R3 * imgV / (1023 - imgV);
+                        R = R / 1000;
+                        lcd.clear();
+                        lcd.setCursor(0, 0);
+                        lcd.print("Gia tri dien tro");
+                        lcd.setCursor(0, 1);
+                        lcd.print("R= ");
+                        lcd.print(R);
+                        lcd.setCursor(12, 1);
+                        lcd.print("kOhm");
+                        delay(500);
+                    } else {
+                        //Bat Q4, tat Q1,Q2,Q3,Q5
+                        digitalWrite(q1, HIGH);
+                        digitalWrite(q2, HIGH);
+                        digitalWrite(q3, HIGH);
+                        digitalWrite(q4, LOW);
+                        //do lai gia tri analog tuong ung voi R ref moi  la  R4
+                        imgV = analogRead(analogPin);
+                        //tương tu như trên
+                        if ((imgV >= 240) && (imgV <= 990)) {  //8.2%
+                            V = (imgV * Vin) / 1023;
+                            R = R4 * imgV / (1023 - imgV);
+                            R = R / 1000;
+                            lcd.clear();
+                            lcd.setCursor(0, 0);
+                            lcd.print("Gia tri dien tro");
+                            lcd.setCursor(0, 1);
+                            lcd.print("R = ");
+                            lcd.print(R);
+                            lcd.setCursor(12, 1);
+                            lcd.print("kOhm");
+                            delay(500);
+                        } else {
+                            lcd.clear();
+                            lcd.print("   Over Load   ");
+                            lcd.setCursor(0, 1);
+                            lcd.print("Dua dien tro vao ");
+                        delay(500);
+                    }
+                }
+            }
+        }
+    }
+    delay(100);
+}
+void doL(){
+    digitalWrite(out, HIGH);
+	delay(5);                       //phat tin hieu nap dien cho mach LC trong 5ms sau do dung
+	digitalWrite(out, LOW);
+	delayMicroseconds(100);         //dung chương trinh trong thoi gian 100 micro giây, de mach LC dao dong on dinh
+	pulse = pulseIn(in, HIGH, 10000);  //tra ve thoi gian micro giay de thay doi trang thai L-H 1s=10^6, tra ve 0 neu het thoi gian cho phep
+    if(pulse > 0.1){ //neu thoi gian > 0.1
+		cap = 2.E-6; // Gia tri dien dung, F 
+		tanso = 1.E6/(2*pulse); // tinh tan so 
+		diencam = 1/(cap*tanso*tanso*4.*3.14159*3.14159); // tinh dien cam dua tren cong thuc
+		diencam=diencam*1.E6;
+        diencam_mH = diencam/1000; // đoi sang đơn vi mH
+        //LCD hien thi
+        lcd.clear();
+        lcd.setCursor(0, 0); // Hàng 0, cot 0
+        lcd.print("   DIEN CAM   ");
+        lcd.setCursor(0, 1);
+        lcd.print("L = ");
+        lcd.setCursor(0, 1); //Hàng 1, cot 0
+        lcd.print(diencam_mH,4);
+        lcd.setCursor(14, 1);//Hàng 1 cot 14
+        lcd.print("mH");
+        delay(500);
+    }else{
+        lcd.clear();
+        lcd.setCursor(0, 1); //Hàng 1, cot 0
+        lcd.print("Dua cuon cam vao");
+        lcd.setCursor(0, 0); //Hàng 1, cot 0
+        lcd.print("   Over Load   ");
+        delay(500);
+    }
+}
+void doC(){
+    pinMode(sac1, OUTPUT);
+    digitalWrite(sac1, HIGH);
+    t = micros(); // bat dau ghi l?i thoi diem sac 
+    while (analogRead(analogPinC)<648){
+        //cho den khi duoc sac 63,2%
+    }
+    dt=micros() - t;
+    
+    digitalWrite(sac1,LOW);
+    pinMode(sac1, INPUT);
+
+    //bat dau xa tu
+    pinMode(xa, OUTPUT);
+    digitalWrite(xa, LOW);
+    while (analogRead(analogPinC) >0 ){
+        // cho toi khi duoc xa tu hoan toan
+    }
+    pinMode(xa, INPUT); // dung xa tu
+
+    if( dt > 99990){
+        mF=((float)dt/RC1)/1000;
+        if(mF > 0.99){
+            lcd.clear();
+            lcd.setCursor(0,0);
+            lcd.print("  DIEN DUNG  ");
+            lcd.setCursor(0, 1);
+            lcd.print("C = ");
+            lcd.print(mF);
+            lcd.print(" mF");
+            delay(500);
+        } else{
+            uF=mF*1000;
+            lcd.clear();
+            lcd.setCursor(0,0);
+            lcd.print("  DIEN DUNG  ");
+            lcd.setCursor(0, 1);
+            lcd.print("C = ");
+            lcd.print(uF);
+            lcd.print(" uF");
+            delay(500);
+        }
+        //do tu lon hon 100uF
+    }else{
+        //neu nho hon 9990, thi khong the do tiep
+        //bat dau qua trinh 2 như qua trinh 1 nhung voi dien tro khac
+        pinMode(sac2, OUTPUT);
+        digitalWrite(sac2, HIGH);
+        t = micros();
+        while(analogRead(analogPinC)<648){
+            // cho duoc sac toi 63,2%
+        }
+        dt=micros() - t;
+        
+        digitalWrite(sac2,LOW);
+        pinMode(sac2, INPUT);
+
+        //bat dau xa tu
+        pinMode(xa, OUTPUT);
+        digitalWrite(xa, LOW);
+        while (analogRead(analogPinC) >0 ){
+        // cho toi khi duoc xa tu hoan toan
+        }
+        pinMode(xa, INPUT); // dung xa tu
+
+        if( dt > 9990){
+            uF=((float)dt/RC2);
+            if(uF > 0.9){
+                lcd.clear();
+                lcd.setCursor(0,0);
+                lcd.print("  DIEN DUNG  ");
+                lcd.setCursor(0, 1);
+                lcd.print("C = ");
+                lcd.print(uF,2);
+                lcd.print(" uF"); 
+                delay(1500);
+            }else{
+                nF=uF*1000;
+                lcd.clear();
+                lcd.setCursor(0,0);
+                lcd.print("  DIEN DUNG  ");
+                lcd.setCursor(0, 1);
+                lcd.print("C = ");
+                lcd.print(nF,2);
+                lcd.print(" nF"); 
+                delay(1500);
+            }
+            //do tu lơn hon 100nF
+        }else{
+            pinMode(sac3,OUTPUT);
+            digitalWrite(sac3,HIGH);
+
+            t=micros();
+            while (analogRead(analogPinC)<648){
+            }
+            dt=micros()-t;
+            
+            nF=(((float)dt)/RC3)*1000;
+            digitalWrite(sac3,LOW);
+            pinMode(sac3,INPUT);
+            pinMode(xa,OUTPUT);
+            digitalWrite(xa,LOW);
+			lcd.clear();
+			lcd.setCursor(0,0);
+			lcd.print("  DIEN DUNG  ");
+			lcd.setCursor(0, 1);
+			lcd.print("C = ");
+			lcd.print(nF,2);
+			lcd.print(" nF"); 
+			delay(1500);
+            while(analogRead(analogPinC)>0){}
+            pinMode(xa,INPUT);
+        }
+    }//else 2
+}
